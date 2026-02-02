@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NTC Process Management Flow Diagram</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2332;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --accent-violet: #8b5cf6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-subtle: rgba(255,255,255,0.08);
+            --glow-blue: 0 0 40px rgba(59,130,246,0.3);
+            --glow-cyan: 0 0 40px rgba(6,182,212,0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+
+        header {
+            position: relative;
+            padding: 60px 40px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-subtle);
+            background: linear-gradient(180deg, rgba(59,130,246,0.05) 0%, transparent 100%);
+        }
+
+        .logo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 24px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: 100px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: var(--glow-blue); }
+            50% { box-shadow: var(--glow-cyan); }
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+        }
+
+        main {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 60px 40px;
+        }
+
+        .flow-container {
+            position: relative;
+        }
+
+        /* Main Flow Section */
+        .flow-section {
+            margin-bottom: 80px;
+            position: relative;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .section-number {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border: 2px solid var(--accent-blue);
+            border-radius: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        /* Flow Diagram Styles */
+        .flow-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            position: relative;
+        }
+
+        .flow-row {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .flow-node {
+            position: relative;
+            padding: 24px 32px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            min-width: 200px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .flow-node:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-blue);
+            box-shadow: var(--glow-blue);
+        }
+
+        .flow-node.primary {
+            background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(6,182,212,0.1));
+            border-color: var(--accent-blue);
+        }
+
+        .flow-node.success {
+            background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05));
+            border-color: var(--accent-emerald);
+        }
+
+        .flow-node.warning {
+            background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.05));
+            border-color: var(--accent-amber);
+        }
+
+        .flow-node.danger {
+            background: linear-gradient(135deg, rgba(244,63,94,0.2), rgba(244,63,94,0.05));
+            border-color: var(--accent-rose);
+        }
+
+        .flow-node.purple {
+            background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.05));
+            border-color: var(--accent-violet);
+        }
+
+        .node-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+
+        .node-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 6px;
+        }
+
+        .node-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Connector Lines */
+        .connector {
+            display: flex;
+            justify-content: center;
+            padding: 15px 0;
+        }
+
+        .connector-line {
+            width: 3px;
+            height: 40px;
+            background: linear-gradient(180deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .connector-line::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 10px solid var(--accent-cyan);
+        }
+
+        .connector-horizontal {
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent-blue), var(--accent-cyan), var(--accent-blue), transparent);
+            margin: 20px 0;
+            border-radius: 3px;
+        }
+
+        /* Branch Diagram */
+        .branch-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 30px;
+        }
+
+        .branch-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 28px;
+            transition: all 0.3s ease;
+        }
+
+        .branch-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+
+        .branch-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .branch-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: 12px;
+            font-size: 1.4rem;
+        }
+
+        .branch-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .branch-list {
+            list-style: none;
+        }
+
+        .branch-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .branch-list li:last-child {
+            border-bottom: none;
+        }
+
+        .branch-list li::before {
+            content: '→';
+            color: var(--accent-cyan);
+            font-weight: bold;
+        }
+
+        /* Scheduling Algorithms Section */
+        .algo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .algo-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .algo-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+        }
+
+        .algo-card:nth-child(2)::before {
+            background: linear-gradient(90deg, var(--accent-emerald), var(--accent-cyan));
+        }
+
+        .algo-card:nth-child(3)::before {
+            background: linear-gradient(90deg, var(--accent-amber), var(--accent-rose));
+        }
+
+        .algo-card:nth-child(4)::before {
+            background: linear-gradient(90deg, var(--accent-violet), var(--accent-rose));
+        }
+
+        .algo-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .algo-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        .algo-full-name {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .algo-type {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(59,130,246,0.2);
+            border-radius: 100px;
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 18px 24px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .comparison-table th {
+            background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(6,182,212,0.1));
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .comparison-table td {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:hover td {
+            background: rgba(59,130,246,0.05);
+        }
+
+        .os-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .os-badge.linux {
+            background: linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.1));
+            color: var(--accent-amber);
+        }
+
+        .os-badge.windows {
+            background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.1));
+            color: var(--accent-blue);
+        }
+
+        /* Recommendation Box */
+        .recommendation-box {
+            background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,182,212,0.1));
+            border: 2px solid var(--accent-emerald);
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 60px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .recommendation-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .recommendation-badge {
+            display: inline-block;
+            padding: 8px 24px;
+            background: var(--accent-emerald);
+            color: var(--bg-primary);
+            border-radius: 100px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .recommendation-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .recommendation-desc {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Security Flow */
+        .security-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .security-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+        }
+
+        .security-item.threat {
+            border-color: var(--accent-rose);
+            background: rgba(244,63,94,0.1);
+        }
+
+        .security-arrow {
+            font-size: 1.5rem;
+            color: var(--accent-cyan);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+            padding: 20px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.blue { background: var(--accent-blue); }
+        .legend-dot.green { background: var(--accent-emerald); }
+        .legend-dot.amber { background: var(--accent-amber); }
+        .legend-dot.rose { background: var(--accent-rose); }
+        .legend-dot.purple { background: var(--accent-violet); }
+
+        /* Animation Classes */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.6s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+        .delay-5 { animation-delay: 0.5s; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header { padding: 40px 20px; }
+            main { padding: 40px 20px; }
+            .section-header { flex-direction: column; text-align: center; }
+            .flow-node { min-width: 160px; padding: 18px 20px; }
+            .recommendation-box { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="noise-overlay"></div>
+    <div class="grid-bg"></div>
+
+    <header>
+        <div class="logo-badge">
+            <span>📡</span>
+            <span>NTC Infrastructure</span>
+        </div>
+        <h1>Process Management Flow Diagram</h1>
+        <p class="subtitle">Nepal Telecom Server Infrastructure Upgrade Assessment</p>
+    </header>
+
+    <main>
+        <!-- Section 1: Overview Flow -->
+        <section class="flow-section fade-in">
+            <div class="section-header">
+                <div class="section-number">01</div>
+                <h2 class="section-title">Project Overview & Objectives</h2>
+            </div>
+
+            <div class="flow-diagram">
+                <div class="flow-row">
+                    <div class="flow-node primary">
+                        <div class="node-icon">🏢</div>
+                        <div class="node-title">NTC Server Upgrade</div>
+                        <div class="node-desc">Infrastructure Modernization</div>
+                    </div>
+                </div>
+
+                <div class="connector">
+                    <div class="connector-line"></div>
+                </div>
+
+                <div class="flow-row">
+                    <div class="flow-node fade-in delay-1">
+                        <div class="node-icon">📞</div>
+                        <div class="node-title">Call Handling</div>
+                        <div class="node-desc">Real-time processing</div>
+                    </div>
+                    <div class="flow-node fade-in delay-2">
+                        <div class="node-icon">💳</div>
+                        <div class="node-title">Billing Systems</div>
+                        <div class="node-desc">Centralized billing</div>
+                    </div>
+                    <div class="flow-node fade-in delay-3">
+                        <div class="node-icon">👥</div>
+                        <div class="node-title">Customer Data</div>
+                        <div class="node-desc">Data management</div>
+                    </div>
+                    <div class="flow-node fade-in delay-4">
+                        <div class="node-icon">📊</div>
+                        <div class="node-title">Network Monitor</div>
+                        <div class="node-desc">Continuous monitoring</div>
+                    </div>
+                </div>
+
+                <div class="connector">
+                    <div class="connector-line"></div>
+                </div>
+
+                <div class="flow-row">
+                    <div class="flow-node success">
+                        <div class="node-icon">🎯</div>
+                        <div class="node-title">Evaluation Focus</div>
+                        <div class="node-desc">Security & Performance</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Process Management Importance -->
+        <section class="flow-section fade-in">
+            <div class="section-header">
+                <div class="section-number">02</div>
+                <h2 class="section-title">Role & Importance of Process Management</h2>
+            </div>
+
+            <div class="branch-container">
+                <div class="branch-card">
+                    <div class="branch-header">
+                        <div class="branch-icon">✅</div>
+                        <div class="branch-title">Key Requirements</div>
+                    </div>
+                    <ul class="branch-list">
+                        <li>Fair CPU allocation</li>
+                        <li>Low latency operations</li>
+                        <li>Resource isolation</li>
+                        <li>Scalability support</li>
+                    </ul>
+                </div>
+
+                <div class="branch-card">
+                    <div class="branch-header">
+                        <div class="branch-icon">⚠️</div>
+                        <div class="branch-title">Poor Config Effects</div>
+                    </div>
+                    <ul class="branch-list">
+                        <li>CPU starvation</li>
+                        <li>Memory exhaustion</li>
+                        <li>Deadlocks</li>
+                        <li>Performance bottlenecks</li>
+                    </ul>
+                </div>
+
+                <div class="branch-card">
+                    <div class="branch-header">
+                        <div class="branch-icon">🔒</div>
+                        <div class="branch-title">Security Threats</div>
+                    </div>
+                    <ul class="branch-list">
+                        <li>Race conditions (TOCTOU)</li>
+                        <li>DoS attacks</li>
+                        <li>Privilege escalation</li>
+                        <li>Resource hijacking</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="security-flow">
+                <div class="security-item threat">
+                    <span>🐛</span>
+                    <span>Vulnerability</span>
+                </div>
+                <span class="security-arrow">→</span>
+                <div class="security-item threat">
+                    <span>⚡</span>
+                    <span>Exploit</span>
+                </div>
+                <span class="security-arrow">→</span>
+                <div class="security-item threat">
+                    <span>💥</span>
+                    <span>Service Disruption</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Process Scheduling Techniques -->
+        <section class="flow-section fade-in">
+            <div class="section-header">
+                <div class="section-number">03</div>
+                <h2 class="section-title">Process Scheduling Techniques</h2>
+            </div>
+
+            <div class="algo-grid">
+                <div class="algo-card">
+                    <div class="algo-name">FCFS</div>
+                    <div class="algo-full-name">First Come First Serve</div>
+                    <div class="algo-type">Non-Preemptive</div>
+                    <p style="margin-top: 16px; font-size: 0.85rem; color: var(--text-muted);">Sequential batch operations, nightly CDR processing</p>
+                </div>
+
+                <div class="algo-card">
+                    <div class="algo-name">SJF</div>
+                    <div class="algo-full-name">Shortest Job First</div>
+                    <div class="algo-type">Non-Preemptive</div>
+                    <p style="margin-top: 16px; font-size: 0.85rem; color: var(--text-muted);">Minimizes wait time, quick authentication</p>
+                </div>
+
+                <div class="algo-card">
+                    <div class="algo-name">RR</div>
+                    <div class="algo-full-name">Round Robin</div>
+                    <div class="algo-type">Preemptive</div>
+                    <p style="margin-top: 16px; font-size: 0.85rem; color: var(--text-muted);">Fair time-sharing, prevents starvation</p>
+                </div>
+
+                <div class="algo-card">
+                    <div class="algo-name">PS</div>
+                    <div class="algo-full-name">Priority Scheduling</div>
+                    <div class="algo-type">Preemptive</div>
+                    <p style="margin-top: 16px; font-size: 0.85rem; color: var(--text-muted);">Critical services first, SLA compliance</p>
+                </div>
+            </div>
+
+            <div class="connector-horizontal"></div>
+
+            <div class="flow-row" style="margin-top: 30px;">
+                <div class="flow-node purple">
+                    <div class="node-icon">📈</div>
+                    <div class="node-title">Metrics Tracked</div>
+                    <div class="node-desc">CT, TAT, WT, RT</div>
+                </div>
+                <div class="flow-node purple">
+                    <div class="node-icon">📊</div>
+                    <div class="node-title">Gantt Charts</div>
+                    <div class="node-desc">Visual scheduling</div>
+                </div>
+                <div class="flow-node purple">
+                    <div class="node-icon">💻</div>
+                    <div class="node-title">C Programs</div>
+                    <div class="node-desc">Platform-specific code</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Process Synchronization -->
+        <section class="flow-section fade-in">
+            <div class="section-header">
+                <div class="section-number">04</div>
+                <h2 class="section-title">Process Synchronization</h2>
+            </div>
+
+            <div class="flow-diagram">
+                <div class="flow-row">
+                    <div class="flow-node danger">
+                        <div class="node-icon">⚠️</div>
+                        <div class="node-title">Problem</div>
+                        <div class="node-desc">Race conditions in logging</div>
+                    </div>
+                </div>
+
+                <div class="connector">
+                    <div class="connector-line"></div>
+                </div>
+
+                <div class="flow-row">
+                    <div class="flow-node warning">
+                        <div class="node-icon">📝</div>
+                        <div class="node-title">Corrupted Logs</div>
+                        <div class="node-desc">Interleaved/partial records</div>
+                    </div>
+                </div>
+
+                <div class="connector">
+                    <div class="connector-line"></div>
+                </div>
+
+                <div class="flow-row">
+                    <div class="flow-node" style="border-color: var(--accent-amber);">
+                        <span class="os-badge linux">🐧 Linux</span>
+                        <div class="node-title" style="margin-top: 12px;">POSIX Mutex</div>
+                        <div class="node-desc">pthread_mutex_lock()</div>
+                    </div>
+                    <div class="flow-node" style="border-color: var(--accent-blue);">
+                        <span class="os-badge windows">🪟 Windows</span>
+                        <div class="node-title" style="margin-top: 12px;">Critical Section</div>
+                        <div class="node-desc">EnterCriticalSection()</div>
+                    </div>
+                </div>
+
+                <div class="connector">
+                    <div class="connector-line"></div>
+                </div>
+
+                <div class="flow-row">
+                    <div class="flow-node success">
+                        <div class="node-icon">✅</div>
+                        <div class="node-title">Solution</div>
+                        <div class="node-desc">Sequential writes, log integrity</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: IPC Shared Memory -->
+        <section class="flow-section fade-in">
+            <div class="section-header">
+                <div class="section-number">05</div>
+                <h2 class="section-title">IPC: Shared Memory</h2>
+            </div>
+
+            <div class="flow-diagram">
+                <div class="flow-row">
+                    <div class="flow-node">
+                        <div class="node-icon">📞</div>
+                        <div class="node-title">Call Routing</div>
+                    </div>
+                    <div class="flow-node">
+                        <div class="node-icon">💳</div>
+                        <div class="node-title">Billing</div>
+                    </div>
+                    <div class="flow-node">
+                        <div class="node-icon">📊</div>
+                        <div class="node-title">Monitoring</div>
+                    </div>
+                </div>
+
+                <div class="connector">
+                    <div class="connector-line"></div>
+                </div>
+
+                <div class="flow-row">
+                    <div class="flow-node primary" style="min-width: 300px;">
+                        <div class="node-icon">🔄</div>
+                        <div class="node-title">Shared Memory Region</div>
+                        <div class="node-desc">Ultra-low-latency data exchange</div>
+                    </div>
+                </div>
+
+                <div class="connector-horizontal"></div>
+
+                <div class="flow-row">
+                    <div class="flow-node" style="border-color: var(--accent-amber);">
+                        <span class="os-badge linux">🐧 Linux</span>
+                        <div class="node-title" style="margin-top: 12px;">POSIX shm_open</div>
+                        <div class="node-desc">SELinux/AppArmor policies</div>
+                    </div>
+                    <div class="flow-node" style="border-color: var(--accent-blue);">
+                        <span class="os-badge windows">🪟 Windows</span>
+                        <div class="node-title" style="margin-top: 12px;">File Mapping</div>
+                        <div class="node-desc">ACLs & Integrity Levels</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: OS Comparison -->
+        <section class="flow-section fade-in">
+            <div class="section-header">
+                <div class="section-number">06</div>
+                <h2 class="section-title">Linux vs Windows Comparison</h2>
+            </div>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th><span class="os-badge linux">🐧 Linux</span></th>
+                        <th><span class="os-badge windows">🪟 Windows</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Process Control</strong></td>
+                        <td>Fine-grained via kernel params & CLI</td>
+                        <td>Centralized GUI & policies</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Scheduling</strong></td>
+                        <td>CFS, highly configurable</td>
+                        <td>Priority-based, abstracted</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Transparency</strong></td>
+                        <td>High visibility into states</td>
+                        <td>Limited without advanced tools</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Security</strong></td>
+                        <td>Capabilities, SELinux/AppArmor</td>
+                        <td>Access Tokens, Integrity Levels</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Sync Mechanism</strong></td>
+                        <td>POSIX pthreads (flexible)</td>
+                        <td>Critical Sections (fast)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>IPC Security</strong></td>
+                        <td>Manual hardening, granular</td>
+                        <td>Built-in ACLs, simpler setup</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Execution Stability</strong></td>
+                        <td>High predictability</td>
+                        <td>Variable due to dynamic boosts</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Recommendation -->
+        <div class="recommendation-box fade-in">
+            <span class="recommendation-badge">✓ Recommendation</span>
+            <h2 class="recommendation-title">Linux Server for Core NTC Services</h2>
+            <p class="recommendation-desc">
+                Linux is recommended as the primary OS for NTC's core telecom services due to superior performance, 
+                fine-grained configurability, and advanced security controls in high-concurrency environments. 
+                Windows can support administrative and auxiliary tasks.
+            </p>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-item">
+                <span class="legend-dot blue"></span>
+                <span>Primary Process</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot green"></span>
+                <span>Solution/Success</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot amber"></span>
+                <span>Warning/Linux</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot rose"></span>
+                <span>Problem/Threat</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-dot purple"></span>
+                <span>Analysis/Metrics</span>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Intersection Observer for scroll animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+
+        // Interactive node hover effects
+        document.querySelectorAll('.flow-node').forEach(node => {
+            node.addEventListener('mouseenter', () => {
+                node.style.transition = 'all 0.3s ease';
+            });
+        });
+    </script>
+</body>
+</html>
